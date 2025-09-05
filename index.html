@@ -1,1173 +1,815 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <link rel="stylesheet" href="css/leaflet.css">
-        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
-        <link rel="stylesheet" href="css/qgis2web.css">
-        <link rel="stylesheet" href="css/fontawesome-all.min.css">
-        <link rel="stylesheet" href="css/leaflet.photon.css">
-        <style>
-        html, body, #map {
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIS Persebaran McDonald’s di Kota Bandung</title>
+
+    <!-- Google Fonts: Montserrat & Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* CSS Reset and Global Styles */
+        :root {
+            --mc-red: #DA291C;
+            --mc-yellow: #FFC72C;
+            --mbc-maroon: #8B0000;
+            --dark-text: #333333;
+            --light-text: #666;
+            --light-bg: #f9f9f9;
+            --white: #ffffff;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            --font-heading: 'Montserrat', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--dark-text);
+            background-color: var(--white);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        h1, h2, h3 {
+            font-family: var(--font-heading);
+            font-weight: 700;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: var(--white);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s ease;
+        }
+
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            color: var(--mbc-maroon);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: var(--dark-text);
+            font-weight: 600;
+            position: relative;
+            padding-bottom: 4px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--mc-red);
+            transition: width 0.3s ease;
+        }
+
+        .nav-menu a:hover {
+            color: var(--mc-red);
+        }
+
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(180deg, rgba(218, 41, 28, 0.05), var(--white));
+            text-align: center;
+            padding: 120px 0;
+            color: var(--dark-text);
+        }
+
+        .hero h1 {
+            font-size: 3.8rem;
+            color: var(--mc-red);
+            margin-bottom: 24px;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            max-width: 700px;
+            margin: 0 auto 32px;
+            color: var(--light-text);
+        }
+
+        .hero-icons {
+            font-size: 2.5rem;
+        }
+
+        .hero-icons span {
+            margin: 0 10px;
+            display: inline-block;
+            animation: bounce 2s infinite;
+        }
+
+        .hero-icons span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+
+        /* Section Styling */
+        section {
+            padding: 100px 0;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.8rem;
+            color: var(--mbc-maroon);
+            margin-bottom: 16px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 64px;
+            color: var(--light-text);
+        }
+
+        /* About Section */
+        #about {
+            background-color: var(--light-bg);
+        }
+
+        .about-content {
+            display: flex;
+            align-items: center;
+            gap: 80px;
+        }
+
+        .about-image {
+            flex: 1.1; 
+            max-width: 550px; 
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            object-fit: cover;
+        }
+
+        .about-text {
+            flex: 1;
+        }
+
+        .about-text h3 {
+            font-size: 1.5rem;
+            color: var(--mc-red);
+            margin-bottom: 16px;
+        }
+        
+        .about-text p {
+            margin-bottom: 16px;
+        }
+
+        /* Map Section */
+        #peta {
+            background-color: var(--white);
+            padding-bottom: 50px;
+        }
+
+        .map-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .search-container {
+            position: relative;
+            flex-grow: 1;
+            max-width: 400px;
+        }
+        
+        #search-bar {
+            padding: 12px 20px 12px 45px;
+            border: 2px solid #ddd;
+            border-radius: 50px;
+            width: 100%;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .search-container .fa-search {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+        }
+
+        #search-bar:focus {
+            outline: none;
+            border-color: var(--mc-yellow);
+            box-shadow: 0 0 0 3px rgba(255, 199, 44, 0.4);
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 50px;
+            background-color: #eee;
+            color: var(--dark-text);
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            background-color: var(--mc-yellow);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .filter-btn.active {
+            background-color: var(--mc-red);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(218, 41, 28, 0.3);
+        }
+
+        .map-container {
+            width: 100%;
+            height: 650px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+
+        .map-container iframe {
             width: 100%;
             height: 100%;
-            padding: 0;
-            margin: 0;
+            border: none;
         }
-        </style>
-        <title></title>
-    </head>
-    <body>
-        <div id="map">
+
+        /* --- STYLING BARU UNTUK DAFTAR CABANG (DIPERBARUI) --- */
+        #daftar-cabang {
+            background-color: var(--light-bg);
+        }
+
+        .branch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 32px;
+        }
+
+        .branch-card {
+            display: flex;
+            flex-direction: column; 
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 3px solid transparent; 
+            transition: transform 0.4s ease-out, box-shadow 0.4s ease-out, border-color 0.4s ease-out;
+            cursor: pointer;
+        }
+
+        .branch-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.12), 0 0 20px rgba(255, 199, 44, 0.6);
+            border-color: var(--mc-yellow);
+        }
+
+        .branch-card-header {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+            background-color: var(--dark-text);
+        }
+
+        .branch-card-header img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        
+        .branch-card:hover .branch-card-header img {
+            transform: scale(1.1);
+        }
+
+        .branch-card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 24px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
+            color: var(--white);
+            text-align: left;
+        }
+
+        .branch-card-header h3 {
+            font-size: 1.8rem;
+            line-height: 1.2;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .branch-card-body {
+            flex-grow: 1; 
+            background-color: var(--dark-text);
+            color: var(--white);
+            padding: 24px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* PERUBAHAN: Gaya untuk rating bintang */
+        .branch-rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .branch-rating .stars {
+            color: var(--mc-yellow);
+            font-size: 1rem;
+        }
+
+        .branch-rating .stars .fas, .branch-rating .stars .far {
+            margin-right: 2px;
+        }
+        
+        .branch-rating .rating-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #eee;
+        }
+
+        .branch-card-body p {
+            font-size: 0.95rem;
+            color: #ccc;
+            line-height: 1.5;
+            padding-bottom: 30px; 
+            flex-grow: 1;
+        }
+
+        .details-icon {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            font-size: 1.5rem;
+            color: var(--mc-yellow);
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            transition-delay: 0.1s;
+        }
+
+        .branch-card:hover .details-icon {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .show-all-container {
+            text-align: center;
+            margin-top: 48px;
+        }
+
+        .show-all-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            background-color: var(--mc-red);
+            color: var(--white);
+            text-decoration: none;
+            font-family: var(--font-body);
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(218, 41, 28, 0.3);
+        }
+
+        .show-all-btn:hover {
+            background-color: var(--mbc-maroon);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(139, 0, 0, 0.4);
+        }
+        /* --- AKHIR STYLING BARU --- */
+
+
+        /* Footer */
+        .footer {
+            background-color: var(--dark-text);
+            padding: 50px 0;
+            color: #ccc;
+            text-align: center;
+        }
+
+        .footer p {
+            margin-bottom: 16px;
+        }
+        
+        .social-media a {
+            color: var(--white);
+            text-decoration: none;
+            font-size: 1.5rem;
+            margin: 0 12px;
+            transition: color 0.3s;
+        }
+
+        .social-media a:hover {
+            color: var(--mc-yellow);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+            .about-content {
+                flex-direction: column;
+            }
+            .about-image {
+                max-width: 80%;
+                margin-bottom: 32px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none; 
+            }
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            .hero p {
+                font-size: 1.1rem;
+            }
+            .map-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .animated-section {
+                opacity: 0;
+                transform: translateY(40px);
+                transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            }
+
+            .animated-section.is-visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="nav-logo"><img src="assets/Logo-transparant-1024x576 3.png" alt="MBC Lab Logo" width="200" height="50">
+</a>
+            <ul class="nav-menu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">Tentang</a></li>
+                <li><a href="#peta">Peta</a></li>
+                 <li><a href="#daftar-cabang">Cabang</a></li>
+            </ul>
         </div>
-        <script src="js/qgis2web_expressions.js"></script>
-        <script src="js/leaflet.js"></script>
-        <script src="js/L.Control.Layers.Tree.min.js"></script>
-        <script src="js/leaflet.rotatedMarker.js"></script>
-        <script src="js/leaflet.pattern.js"></script>
-        <script src="js/leaflet-hash.js"></script>
-        <script src="js/Autolinker.min.js"></script>
-        <script src="js/rbush.min.js"></script>
-        <script src="js/labelgun.min.js"></script>
-        <script src="js/labels.js"></script>
-        <script src="js/leaflet.photon.js"></script>
-        <script src="data/BATASDESA2017KEMENDES_1.js"></script>
-        <script src="data/Mcd_Bandung_2.js"></script>
-        <script>
-        var map = L.map('map', {
-            zoomControl:false, maxZoom:28, minZoom:1
-        }).fitBounds([[-7.202393628184231,107.27143324065835],[-6.789555939100113,108.02402010904333]]);
-        var hash = new L.Hash(map);
-        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
-        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
-        // remove popup's row if "visible-with-data"
-        function removeEmptyRowsFromPopupContent(content, feature) {
-         var tempDiv = document.createElement('div');
-         tempDiv.innerHTML = content;
-         var rows = tempDiv.querySelectorAll('tr');
-         for (var i = 0; i < rows.length; i++) {
-             var td = rows[i].querySelector('td.visible-with-data');
-             var key = td ? td.id : '';
-             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
-                 rows[i].parentNode.removeChild(rows[i]);
-             }
-         }
-         return tempDiv.innerHTML;
-        }
-        // add class to format popup if it contains media
-		function addClassToPopupIfMedia(content, popup) {
-			var tempDiv = document.createElement('div');
-			tempDiv.innerHTML = content;
-			if (tempDiv.querySelector('td img')) {
-				popup._contentNode.classList.add('media');
-					// Delay to force the redraw
-					setTimeout(function() {
-						popup.update();
-					}, 10);
-			} else {
-				popup._contentNode.classList.remove('media');
-			}
-		}
-        var zoomControl = L.control.zoom({
-            position: 'topleft'
-        }).addTo(map);
-        var bounds_group = new L.featureGroup([]);
-        function setBounds() {
-        }
-        map.createPane('pane_GoogleSatellite_0');
-        map.getPane('pane_GoogleSatellite_0').style.zIndex = 400;
-        var layer_GoogleSatellite_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-            pane: 'pane_GoogleSatellite_0',
-            opacity: 1.0,
-            attribution: '',
-            minZoom: 1,
-            maxZoom: 28,
-            minNativeZoom: 0,
-            maxNativeZoom: 19
-        });
-        layer_GoogleSatellite_0;
-        map.addLayer(layer_GoogleSatellite_0);
-        function pop_BATASDESA2017KEMENDES_1(feature, layer) {
-            var popupContent = '<table>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['FID'] !== null ? autolinker.link(String(feature.properties['FID']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['PROVNO'] !== null ? autolinker.link(String(feature.properties['PROVNO']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['KABKOTNO'] !== null ? autolinker.link(String(feature.properties['KABKOTNO']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['KECNO'] !== null ? autolinker.link(String(feature.properties['KECNO']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['DESANO'] !== null ? autolinker.link(String(feature.properties['DESANO']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['PROVINSI'] !== null ? autolinker.link(String(feature.properties['PROVINSI']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['KABKOT'] !== null ? autolinker.link(String(feature.properties['KABKOT']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['KECAMATAN'] !== null ? autolinker.link(String(feature.properties['KECAMATAN']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['DESA'] !== null ? autolinker.link(String(feature.properties['DESA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['IDDESA'] !== null ? autolinker.link(String(feature.properties['IDDESA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['TAHUN'] !== null ? autolinker.link(String(feature.properties['TAHUN']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['SUMBER'] !== null ? autolinker.link(String(feature.properties['SUMBER']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['DESKEL unt'] !== null ? autolinker.link(String(feature.properties['DESKEL unt']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['DESKEL u_1'] !== null ? autolinker.link(String(feature.properties['DESKEL u_1']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['DESKEL u_2'] !== null ? autolinker.link(String(feature.properties['DESKEL u_2']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['DESKEL u_3'] !== null ? autolinker.link(String(feature.properties['DESKEL u_3']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['DESKEL u_4'] !== null ? autolinker.link(String(feature.properties['DESKEL u_4']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['DESKEL u_5'] !== null ? autolinker.link(String(feature.properties['DESKEL u_5']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['DESKEL u_6'] !== null ? autolinker.link(String(feature.properties['DESKEL u_6']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['DESKEL u_7'] !== null ? autolinker.link(String(feature.properties['DESKEL u_7']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['DESKEL u_8'] !== null ? autolinker.link(String(feature.properties['DESKEL u_8']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                </table>';
-            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-			layer.on('popupopen', function(e) {
-				addClassToPopupIfMedia(content, e.popup);
-			});
-			layer.bindPopup(content, { maxHeight: 400 });
-        }
+    </nav>
 
-        function style_BATASDESA2017KEMENDES_1_0(feature) {
-            switch(String(feature.properties['KECAMATAN'])) {
-                case 'ANDIR':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(218,21,67,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'ANTAPANI':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(233,120,58,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'ARCAMANIK':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(210,36,126,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'ARJASARI':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(227,54,213,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'ASTANAANYAR':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(238,208,56,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'BABAKAN CIPARAY':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(200,127,231,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'BALEENDAH':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(35,204,134,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'BANDUNG KIDUL':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(121,137,219,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'BANDUNG KULON':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(231,104,121,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'BANDUNG WETAN':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(216,140,115,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'BANJARAN':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(145,231,87,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'BATUNUNGGAL':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(233,236,55,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'BOJONGLOA KALER':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(231,63,183,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'BOJONGLOA KIDUL':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(120,224,131,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'BOJONGSOANG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(45,229,82,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'BUAHBATU':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(102,169,223,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CANGKUANG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(80,24,200,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CIBEUNYING KALER':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(139,228,234,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CIBEUNYING KIDUL':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(229,172,15,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CIBIRU':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(126,234,99,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CICALENGKA':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(97,67,208,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CICENDO':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(204,197,118,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CIDADAP':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(169,105,229,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CIKANCUNG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(115,201,190,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CILENGKRANG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(240,77,148,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CILEUNYI':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(144,215,73,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CIMAUNG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(196,236,50,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CIMENYAN':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(130,201,215,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CINAMBO':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(210,225,94,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CIPARAY':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(234,17,90,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'CIWIDEY':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(98,191,222,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'COBLONG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(229,166,58,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'DAYEUHKOLOT':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(17,143,211,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'GEDEBAGE':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(26,232,88,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'IBUN':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(131,138,235,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'KATAPANG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(65,214,65,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'KERTASARI':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(109,31,219,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'KIARACONDONG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(208,123,108,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'KUTAWARINGIN':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(19,220,96,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'LENGKONG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(117,224,71,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'MAJALAYA':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(220,165,120,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'MANDALAJATI':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(70,212,51,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'MARGAASIH':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(103,163,237,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'MARGAHAYU':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(217,69,160,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'NAGREG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(113,226,202,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'PACET':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(207,125,121,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'PAMEUNGPEUK':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(230,86,90,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'PANGALENGAN':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(176,50,207,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'PANYILEUKAN':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(117,217,166,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'PASEH':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(86,121,217,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'PASIRJAMBU':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(89,67,229,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'RANCABALI':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(192,238,94,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'RANCAEKEK':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(88,139,233,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'RANCASARI':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(238,97,212,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'REGOL':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(86,220,216,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'SOLOKAN JERUK':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(148,222,37,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'SOREANG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(232,169,97,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'SUKAJADI':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(108,230,191,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'SUKASARI':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(178,89,233,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'SUMUR BANDUNG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(202,46,219,0.4)',
-                interactive: true,
-            }
-                    break;
-                case 'UJUNG BERUNG':
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(33,25,240,0.4)',
-                interactive: true,
-            }
-                    break;
-                default:
-                    return {
-                pane: 'pane_BATASDESA2017KEMENDES_1',
-                opacity: 1,
-                color: 'rgba(35,35,35,0.4)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(207,77,207,0.4)',
-                interactive: true,
-            }
-                    break;
-            }
-        }
-        map.createPane('pane_BATASDESA2017KEMENDES_1');
-        map.getPane('pane_BATASDESA2017KEMENDES_1').style.zIndex = 401;
-        map.getPane('pane_BATASDESA2017KEMENDES_1').style['mix-blend-mode'] = 'normal';
-        var layer_BATASDESA2017KEMENDES_1 = new L.geoJson(json_BATASDESA2017KEMENDES_1, {
-            attribution: '',
-            interactive: true,
-            dataVar: 'json_BATASDESA2017KEMENDES_1',
-            layerName: 'layer_BATASDESA2017KEMENDES_1',
-            pane: 'pane_BATASDESA2017KEMENDES_1',
-            onEachFeature: pop_BATASDESA2017KEMENDES_1,
-            style: style_BATASDESA2017KEMENDES_1_0,
-        });
-        bounds_group.addLayer(layer_BATASDESA2017KEMENDES_1);
-        map.addLayer(layer_BATASDESA2017KEMENDES_1);
-        function pop_Mcd_Bandung_2(feature, layer) {
-            var popupContent = '<table>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['No'] !== null ? autolinker.link(String(feature.properties['No']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <th scope="row">Nama Mcd</th>\
-                        <td>' + (feature.properties['Nama Mcd'] !== null ? autolinker.link(String(feature.properties['Nama Mcd']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['latitude'] !== null ? autolinker.link(String(feature.properties['latitude']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['longitude'] !== null ? autolinker.link(String(feature.properties['longitude']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                </table>';
-            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-			layer.on('popupopen', function(e) {
-				addClassToPopupIfMedia(content, e.popup);
-			});
-			layer.bindPopup(content, { maxHeight: 400 });
-        }
+    <!-- Hero Section -->
+    <header id="home" class="hero">
+        <div class="container">
+            <h1>Persebaran McDonald’s di Kota Bandung</h1>
+            <p>Jelajahi lokasi setiap cabang McDonald’s di Bandung melalui visualisasi Peta Web GIS yang interaktif dan modern.</p>
+            <div class="hero-icons">
+                <span>🍔</span>
+                <span>🍟</span>
+            </div>
+        </div>
+    </header>
 
-        function style_Mcd_Bandung_2_0() {
-            return {
-                pane: 'pane_Mcd_Bandung_2',
-        rotationAngle: 0.0,
-        rotationOrigin: 'center center',
-        icon: L.icon({
-            iconUrl: 'markers/Mcd_Bandung_2.svg',
-            iconSize: [57.0, 57.0]
-        }),
-                interactive: true,
-            }
-        }
-        map.createPane('pane_Mcd_Bandung_2');
-        map.getPane('pane_Mcd_Bandung_2').style.zIndex = 402;
-        map.getPane('pane_Mcd_Bandung_2').style['mix-blend-mode'] = 'normal';
-        var layer_Mcd_Bandung_2 = new L.geoJson(json_Mcd_Bandung_2, {
-            attribution: '',
-            interactive: true,
-            dataVar: 'json_Mcd_Bandung_2',
-            layerName: 'layer_Mcd_Bandung_2',
-            pane: 'pane_Mcd_Bandung_2',
-            onEachFeature: pop_Mcd_Bandung_2,
-            pointToLayer: function (feature, latlng) {
-                var context = {
-                    feature: feature,
-                    variables: {}
-                };
-                return L.marker(latlng, style_Mcd_Bandung_2_0(feature));
-            },
+    <main>
+        <!-- About Section -->
+        <section id="about">
+            <div class="container">
+                <h2 class="section-title">Tentang Proyek</h2>
+                <p class="section-subtitle">Website ini merupakan implementasi Sistem Informasi Geografis (SIG) untuk memetakan data persebaran spasial.</p>
+                <div class="about-content">
+                    <img src="https://images.unsplash.com/photo-1626997971358-2033c4a23b1b?q=80&w=2070&auto=format&fit=crop" 
+                         alt="Ilustrasi Restoran McDonald's" class="about-image"
+                         src="https://images.unsplash.com/photo-1626997971358-2033c4a23b1b?q=80&w=2070&auto=format&fit=crop" 
+                            alt="Ilustrasi Restoran McDonald's" 
+                            class="about-image" 
+                            onerror="this.onerror=null;this.src='data/Ilustrasi-McD.webp';" 
+                            width="200"
+                            />
+                    <div class="about-text">
+                        <h3>Visualisasi Data Geospasial</h3>
+                        <p>Tujuan utama dari website ini adalah untuk menampilkan data persebaran cabang McDonald’s di Kota Bandung secara visual melalui sebuah peta interaktif. Proyek ini memanfaatkan data geospasial yang diolah menggunakan software QGIS.</p>
+                        <p>Peta yang dihasilkan kemudian diekspor ke format web (HTML, JS, CSS) agar dapat disajikan dalam platform Web GIS yang modern, estetik, dan mudah diakses oleh siapa saja.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Peta Interaktif Section -->
+        <section id="peta">
+            <div class="container">
+                <h2 class="section-title">Peta Interaktif</h2>
+                <p class="section-subtitle">Gunakan fitur pencarian atau filter berdasarkan kategori. Klik marker pada peta untuk melihat detail informasi setiap cabang.</p>
+
+                <!-- Fitur Filter & Search -->
+                <div class="map-controls">
+                    <div class="search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-bar" placeholder="Cari cabang McD (contoh: Dago)...">
+                    </div>
+                    <div class="filters">
+                        <button class="filter-btn active" data-filter="all">Semua</button>
+                        <button class="filter-btn" data-filter="drive-thru">Drive-Thru</button>
+                        <button class="filter-btn" data-filter="24-jam">24 Jam</button>
+                        <button class="filter-btn" data-filter="mall">Di Dalam Mall</button>
+                    </div>
+                </div>
+
+                <!-- Embed Peta dari QGIS di sini -->
+                <div class="map-container">
+                    <iframe src="data/qgis2web_2025_09_05-09_18_04_675215/index.html" width="100%" height="600" style="border:none; border-radius:8px;"></iframe>
+                </div>
+            </div>
+        </section>
+
+        <!-- DAFTAR CABANG -->
+        <section id="daftar-cabang">
+            <div class="container">
+                <h2 class="section-title">Daftar Cabang Pilihan</h2>
+                <p class="section-subtitle">Berikut adalah beberapa cabang McDonald's yang populer di Kota Bandung.</p>
+                <div class="branch-grid">
+                    <!-- Card 1 -->
+                    <div class="branch-card">
+                        <div class="branch-card-header">
+                            <img src="img/McDonald's Simpang Dago (Jl. Ir. H. Juanda 181).jpg" alt="Foto McD Dago" onerror="this.onerror=null;this.src='https://placehold.co/400x200/333333/ffffff?text=McD+Dago';">
+                            <div class="branch-card-overlay">
+                                <h3>McD Dago</h3>
+                            </div>
+                        </div>
+                        <div class="branch-card-body">
+                             <!-- PERUBAHAN: Menambahkan Rating -->
+                            <div class="branch-rating">
+                                <span class="rating-value">4.5</span>
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                            </div>
+                            <p>Jl. Ir. H. Juanda No.181, Lb. Siliwangi, Kecamatan Coblong, Kota Bandung, Jawa Barat 40132</p>
+                            <i class="fas fa-arrow-right details-icon"></i>
+                        </div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="branch-card">
+                         <div class="branch-card-header">
+                            <img src="img/McDonald's Podomoro Park.jpeg" alt="Foto McD Simpang Dago">
+                            <div class="branch-card-overlay">
+                                <h3>McD Podomoro Park</h3>
+                            </div>
+                        </div>
+                        <div class="branch-card-body">
+                            <div class="branch-rating">
+                                <span class="rating-value">4.3</span>
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </div>
+                            </div>
+                            <p>Jl. Podomoro Boulevard Utara No.1, Lengkong, Kec. Bojongsoang, Kabupaten Bandung, Jawa Barat 40287</p>
+                            <i class="fas fa-arrow-right details-icon"></i>
+                        </div>
+                    </div>
+                    <!-- Card 3 -->
+                    <div class="branch-card">
+                        <div class="branch-card-header">
+                            <img src="img/McDonald's Buah Batu.jpeg" alt="Foto McD Buah Batu">
+                            <div class="branch-card-overlay">
+                                <h3>McD Buah Batu</h3>
+                            </div>
+                        </div>
+                        <div class="branch-card-body">
+                             <div class="branch-rating">
+                                <span class="rating-value">5.0</span>
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                            <p>Jl. Buah Batu No. 252, Cijagra, Kecamatan Lengkong, Kota Bandung, Jawa Barat 40265</p>
+                            <i class="fas fa-arrow-right details-icon"></i>
+                        </div>
+                    </div>
+                    <!-- Card 4 -->
+                    <div class="branch-card">
+                        <div class="branch-card-header">
+                            <img src="img/BIP.jpg" alt="Foto McD BIP">
+                            <div class="branch-card-overlay">
+                                <h3>McD BIP</h3>
+                            </div>
+                        </div>
+                        <div class="branch-card-body">
+                            <div class="branch-rating">
+                                <span class="rating-value">4.6</span>
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                            </div>
+                            <p>Bandung Indah Plaza, Lantai 1, Jl. Merdeka No.56, Citarum, Bandung Wetan, Kota Bandung</p>
+                            <i class="fas fa-arrow-right details-icon"></i>
+                        </div>
+                    </div>
+                    <!-- Card 5 -->
+                    <div class="branch-card">
+                        <div class="branch-card-header">
+                            <img src="img/McDonald's Telkom Diponegoro (Jl. Diponegoro No.42).jpeg" alt="Foto McD Gatot Subroto">
+                            <div class="branch-card-overlay">
+                                <h3>McD Telkom Diponegoro</h3>
+                            </div>
+                        </div>
+                        <div class="branch-card-body">
+                            <div class="branch-rating">
+                                <span class="rating-value">4.2</span>
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </div>
+                            </div>
+                            <p>Jl. Diponegoro No.24, Citarum, Kec. Bandung Wetan, Kota Bandung, Jawa Barat 40115</p>
+                            <i class="fas fa-arrow-right details-icon"></i>
+                        </div>
+                    </div>
+                    <!-- Card 6 -->
+                    <div class="branch-card">
+                        <div class="branch-card-header">
+                            <img src="img/McDonald's Kopo (Kopo Mas, Jl. Kopo No.618).jpeg" alt="Foto McD Kopo">
+                            <div class="branch-card-overlay">
+                                <h3>McD Kopo</h3>
+                            </div>
+                        </div>
+                        <div class="branch-card-body">
+                           <div class="branch-rating">
+                                <span class="rating-value">4.0</span>
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </div>
+                            </div>
+                            <p>Miko Mall, Lt. Ground, Jl. Kopo No.599, Cirangrang, Kecamatan Babakan Ciparay, Kota Bandung</p>
+                            <i class="fas fa-arrow-right details-icon"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="show-all-container">
+                    <a href="#" class="show-all-btn">Tampilkan Semua Cabang</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+      <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+                <img src="assets/Logo-transparant-1024x576 3.png" alt="MBC Lab Logo" width="200" height="50">
+                <img src="assets/LOGO GIS FIX.png" alt="GIS Logo" width="65" height="70">
+            <div class="social-media">
+                <a href="https://www.instagram.com/badarbaraja/" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="http://github.com/badarbaradja" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                <a href="https://www.linkedin.com/in/badar-baradja-5b1bb820a/" aria-label="Linkedin"><i class="fab fa-linkedin"></i></a>
+            </div>
+             <p>&copy; 2025 TUGAS Learning Advance Skill GIS. Dibuat dengan semangat dan juga kafein.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Logika untuk Tombol Filter ---
+            const filterButtons = document.querySelectorAll('.filter-btn');
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Menghapus kelas 'active' dari semua tombol
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    // Menambahkan kelas 'active' ke tombol yang baru diklik
+                    button.classList.add('active');
+
+                    const filterValue = button.getAttribute('data-filter');
+                    
+                    // --- INTEGRASI PETA QGIS ---
+                    console.log(`Filter yang dipilih: ${filterValue}`);
+                    console.log(`Filter "${filterValue}" diaktifkan. Anda perlu menghubungkan ini dengan fungsi filter pada layer peta QGIS Anda.`);
+                    
+                });
+            });
+
+            // --- Logika untuk Search Bar ---
+            const searchBar = document.getElementById('search-bar');
+            searchBar.addEventListener('keyup', (event) => {
+                const query = searchBar.value.toLowerCase();
+
+                // --- INTEGRASI PETA QGIS ---
+                console.log(`Mencari cabang: ${query}`);
+            });
+
+            // --- Animasi Scroll ---
+            const sections = document.querySelectorAll('section');
+            const options = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if(entry.isIntersecting){
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, options);
+
+            sections.forEach(section => {
+                section.classList.add('animated-section');
+                observer.observe(section);
+            });
         });
-        bounds_group.addLayer(layer_Mcd_Bandung_2);
-        map.addLayer(layer_Mcd_Bandung_2);
-        setBounds();
-        </script>
-    </body>
+    </script>
+</body>
 </html>
+
