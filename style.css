@@ -1,0 +1,68 @@
+/* style.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    scroll-behavior: smooth;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+    position: sticky;
+    top: 0;
+}
+
+.navbar .logo img {
+    height: 40px;
+    margin-right: 10px;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+.hero {
+    height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f4f4f4;
+    text-align: center;
+}
+
+main section, footer {
+    padding: 40px 20px;
+    text-align: center;
+}
+
+/* PENTING: Peta harus punya tinggi! */
+#map {
+    height: 500px;
+    width: 90%;
+    margin: 0 auto; /* map di tengah */
+    border: 1px solid #ccc;
+}
+
+footer {
+    background-color: #333;
+    color: white;
+}
+
+footer a {
+    color: #4db8ff;
+    text-decoration: none;
+}
